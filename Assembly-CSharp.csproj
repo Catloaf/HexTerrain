@@ -63,6 +63,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Custom Brushes\HexBrush.cs" />
     <Compile Include="Assets\Scripts\GenerateHexTower.cs" />
     <Reference Include="Unity.Timeline.Editor">
       <HintPath>C:/Users/theca/Documents/Job Hunting/Portfolio/HexTerrain/Library/ScriptAssemblies/Unity.Timeline.Editor.dll</HintPath>
