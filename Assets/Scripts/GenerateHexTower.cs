@@ -5,34 +5,47 @@ using UnityEngine.Tilemaps;
 
 public class GenerateHexTower : MonoBehaviour
 {
-    public int hight;
+    //public int hight;
     public int floorHight;
     public int ceilHight;
     public float radius;
-    //public bool pointOnTop = true;
     public MeshFilter hexTower;
     public Mesh towerMesh;
     public Grid grid;
     public Tilemap tMap;
     public GameObject hexTerrainGameObject;
 
+    
+    [SerializeField]
+    private bool pointOnTop;
     [SerializeField]
     private List<Vector3Int> activeTiles;
+    private int hexIterator;
 
-    void Start()
-    {
-        GenerateMesh();
-    }
 
-    void Update()
-    {
-        if (Input.GetMouseButtonDown(0))    //Just allowing to make changes as things go
+    public void GenerateMesh() {
+        activeTiles.Clear();
+
+        foreach (Transform child in transform)  //Deleting Children (primitive Spheres used for debugging so the scene doesn't get cluttered)
         {
-            GenerateMesh();
+            Destroy(child.gameObject);
         }
-    }
+        if (grid.cellSwizzle == GridLayout.CellSwizzle.XYZ) //In unity, the only difference between a hegaonal grid with points on top vs flat-topped hexagons is the cell swizzle
+        {
+            pointOnTop = true;
+        }
+        else
+        {
+            if (grid.cellSwizzle == GridLayout.CellSwizzle.YXZ)
+            {
+                pointOnTop = false;
+            }
+            else
+            {
+                Debug.LogError("THIS WILL NOT WORK UNLESS THE GRID'S CELL SWIZZLE IS EITHER IN XYZ OR YXZ!!!");
+            }
+        }
 
-    void GenerateMesh() {
         //hexagon tops
         towerMesh = new Mesh();
         
@@ -45,15 +58,16 @@ public class GenerateHexTower : MonoBehaviour
         {
             GetActiveTiles();
         }
+
         towerMesh.subMeshCount = activeTiles.Count + 7; //Each hexagonal 'tower' has 7 flat planes, each made as a submesh here 
 
-
+        hexIterator = 0;
         foreach (Vector3Int hexTile in activeTiles)
         {
             Vector3[] hexVerts = new Vector3[7];   //points for the hexagon, 0 is center then top (or left if !pointOntop) and then counter clockwise 
 
-            //if (pointOnTop)
-            //{   //Pointy topped
+            if (pointOnTop)
+            {   //Pointy topped
                 hexVerts[0] = tMap.GetCellCenterWorld(hexTile);
                 hexVerts[0].z = hexTile.z;    
                 hexVerts[1] = new Vector3(hexVerts[0].x, hexVerts[0].y + radius, hexVerts[0].z);
@@ -62,19 +76,19 @@ public class GenerateHexTower : MonoBehaviour
                 hexVerts[4] = new Vector3(hexVerts[0].x, hexVerts[0].y - radius, hexVerts[0].z);
                 hexVerts[5] = new Vector3(hexVerts[0].x + (radius * Mathf.Sin(60 * (Mathf.PI / 180))), hexVerts[0].y - (radius * Mathf.Cos(60 * (Mathf.PI / 180))), hexVerts[0].z);
                 hexVerts[6] = new Vector3(hexVerts[0].x + (radius * Mathf.Sin(60 * (Mathf.PI / 180))), hexVerts[0].y + (radius * Mathf.Cos(60 * (Mathf.PI / 180))), hexVerts[0].z);
-            /*}
+            }
             else
             {  //Flat toppped
-                verts[0] = tMap.GetCellCenterWorld(hexTile);
-                //verts[0].z = height;    //Just incase of stupidity
-                verts[1] = new Vector3(verts[0].x - radius, verts[0].y, verts[0].z);
-                verts[2] = new Vector3(verts[0].x - (radius * Mathf.Cos(60 * (Mathf.PI / 180))), verts[0].y - (radius * Mathf.Sin(60 * (Mathf.PI / 180))), verts[0].z);
-                verts[3] = new Vector3(verts[0].x + (radius * Mathf.Cos(60 * (Mathf.PI / 180))), verts[0].y - (radius * Mathf.Sin(60 * (Mathf.PI / 180))), verts[0].z);
-                verts[4] = new Vector3(verts[0].x + radius, verts[0].y, verts[0].z);
-                verts[5] = new Vector3(verts[0].x + (radius * Mathf.Cos(60 * (Mathf.PI / 180))), verts[0].y + (radius * Mathf.Sin(60 * (Mathf.PI / 180))), verts[0].z);
-                verts[6] = new Vector3(verts[0].x - (radius * Mathf.Cos(60 * (Mathf.PI / 180))), verts[0].y + (radius * Mathf.Sin(60 * (Mathf.PI / 180))), verts[0].z);
+                hexVerts[0] = tMap.GetCellCenterWorld(hexTile);
+                hexVerts[0].z = hexTile.z;
+                hexVerts[1] = new Vector3(hexVerts[0].x - radius, hexVerts[0].y, hexVerts[0].z);
+                hexVerts[2] = new Vector3(hexVerts[0].x - (radius * Mathf.Cos(60 * (Mathf.PI / 180))), hexVerts[0].y - (radius * Mathf.Sin(60 * (Mathf.PI / 180))), hexVerts[0].z);
+                hexVerts[3] = new Vector3(hexVerts[0].x + (radius * Mathf.Cos(60 * (Mathf.PI / 180))), hexVerts[0].y - (radius * Mathf.Sin(60 * (Mathf.PI / 180))), hexVerts[0].z);
+                hexVerts[4] = new Vector3(hexVerts[0].x + radius, hexVerts[0].y, hexVerts[0].z);
+                hexVerts[5] = new Vector3(hexVerts[0].x + (radius * Mathf.Cos(60 * (Mathf.PI / 180))), hexVerts[0].y + (radius * Mathf.Sin(60 * (Mathf.PI / 180))), hexVerts[0].z);
+                hexVerts[6] = new Vector3(hexVerts[0].x - (radius * Mathf.Cos(60 * (Mathf.PI / 180))), hexVerts[0].y + (radius * Mathf.Sin(60 * (Mathf.PI / 180))), hexVerts[0].z);
             }
-            */
+            
 
             for (int i = 0; i < hexVerts.Length; i++)
             {
@@ -120,11 +134,11 @@ public class GenerateHexTower : MonoBehaviour
                 towerMesh.SetVertices(vertList);               
             }
 
-                /*if (activeTiles.IndexOf(hexTile) == activeTiles.Count-1)
+               /* if (activeTiles.IndexOf(hexTile) == activeTiles.Count-1)
                 {
 
                     foreach (var item in vertList)
-                    {
+                    { 
                         GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                         sphere.transform.position = item;
                         
@@ -133,6 +147,7 @@ public class GenerateHexTower : MonoBehaviour
                         sphere.name = "Sphere " + vertList.IndexOf(item);
                     }
                 }*/
+            hexIterator++;
         }
 
         SetTriangles();
@@ -141,7 +156,7 @@ public class GenerateHexTower : MonoBehaviour
 
     public void GetActiveTiles()
     {
-        tMap.CompressBounds();    //May or may not need this... we'll see I guess
+        //tMap.CompressBounds();    //May or may not need this... we'll see I guess
         for (int i = tMap.editorPreviewOrigin.x; i < tMap.size.x; i++)
         {
             for (int j = tMap.editorPreviewOrigin.y; j < tMap.size.y; j++)
@@ -162,26 +177,55 @@ public class GenerateHexTower : MonoBehaviour
         int index = 0;
         foreach (var hexTile in activeTiles)
         {
-            int[] triangles = new int[] {
-                index, index + 2, index + 1,    //Start hexagon
-                index, index + 3, index + 2,
-                index, index + 4, index + 3,
-                index, index + 5, index + 4,
-                index, index + 6, index + 5,
-                index, index + 1, index + 6,    //End hexagon
-                index + 1, index + 13, index + 14,  //Skirt Flap 1
-                index + 1, index + 14, index + 6,
-                index + 2, index + 11, index+ 12,   //Skirt Flap 2
-                index + 2, index + 12, index +1,
-                index + 3, index + 9, index + 10,  //Skirt Flap 3
-                index + 3, index + 10, index + 2,
-                index + 4, index + 7, index +8,   //Skirt Flap 4
-                index + 4, index + 8, index + 3,
-                index + 5, index + 17, index + 18,  //Skirt Flap 5
-                index + 5, index + 18, index + 4,
-                index + 6, index + 15, index + 16,  //Skirt Flap 6
-                index + 6, index + 16, index + 5
-            };
+            int[] triangles;
+            if (pointOnTop)
+            {
+                triangles = new int[] {
+                    index, index + 2, index + 1,    //Start hexagon
+                    index, index + 3, index + 2,
+                    index, index + 4, index + 3,
+                    index, index + 5, index + 4,
+                    index, index + 6, index + 5,
+                    index, index + 1, index + 6,    //End hexagon
+                    index + 1, index + 13, index + 14,  //Skirt Flap 1
+                    index + 1, index + 14, index + 6,
+                    index + 2, index + 11, index+ 12,   //Skirt Flap 2
+                    index + 2, index + 12, index +1,
+                    index + 3, index + 9, index + 10,  //Skirt Flap 3
+                    index + 3, index + 10, index + 2,
+                    index + 4, index + 7, index +8,   //Skirt Flap 4
+                    index + 4, index + 8, index + 3,
+                    index + 5, index + 17, index + 18,  //Skirt Flap 5
+                    index + 5, index + 18, index + 4,
+                    index + 6, index + 15, index + 16,  //Skirt Flap 6
+                    index + 6, index + 16, index + 5
+                };
+            }
+            else
+            {
+                triangles = new int[] {
+                    index, index + 2, index + 1,    //Start hexagon
+                    index, index + 3, index + 2,
+                    index, index + 4, index + 3,
+                    index, index + 5, index + 4,
+                    index, index + 6, index + 5,
+                    index, index + 1, index + 6,    //End hexagon
+                    index + 1, index + 18, index + 17,  //Skirt Flap 1
+                    index + 1, index + 17, index + 6,
+                    index + 2, index + 8, index+ 7,   //Skirt Flap 2
+                    index + 2, index + 7, index +1,
+                    index + 3, index + 10, index + 9,  //Skirt Flap 3
+                    index + 3, index + 9, index + 2,
+                    index + 4, index + 12, index +11,   //Skirt Flap 4
+                    index + 4, index + 11, index + 3,
+                    index + 5, index + 14, index + 13,  //Skirt Flap 5
+                    index + 5, index + 13, index + 4,
+                    index + 6, index + 16, index + 15,  //Skirt Flap 6
+                    index + 6, index + 15, index + 5
+                };
+            }
+            
+            
 
             for (int i = 0; i < triangles.Length; i++)
             {
@@ -200,76 +244,158 @@ public class GenerateHexTower : MonoBehaviour
         List<Vector3Int> intNodes = GetNeighbors(hexTile);  //The grid coordinates of the neighbors, if neighbors don't exist, then there are fake ones with defaultHeight
         Vector3 worldCoordHexTile = tMap.GetCellCenterWorld(hexTile); //Need to do this to not lose hexTile's z value
         worldCoordHexTile.z = hexTile.z;
-
+        Vector3 node;
         foreach (Vector3Int intNode in intNodes)        //Getting the center of the tiles in World coordinates (and making it Vector3s instead of Vector3Ints while we're at it)
         {
-            Vector3 node = tMap.GetCellCenterWorld(intNode);
+            if (pointOnTop)
+            {
+                node = tMap.GetCellCenterWorld(intNode);
+            }
+            else
+            {
+                node.x = tMap.GetCellCenterWorld(intNode).y;
+                node.y = tMap.GetCellCenterWorld(intNode).x;
+            }
+           
             node.z = intNode.z; //GetCellCenterWorld() always returns 0 for z, so putting it back here
             nodes.Add(node);
         }
         Vector3[] midpoint = new Vector3[6];
                             //All the midpoints should align to the grid intersections, so just taking the hexagon definition code from earlier for the x,y coordinates of the midpoints,
                             //Then I just need to line them up right and to work with my previous code, then determind the z value                  
-        midpoint[0] = new Vector3(worldCoordHexTile.x + (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.y - (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), 0);
-        midpoint[1] = new Vector3(worldCoordHexTile.x, worldCoordHexTile.y - 0.5f, 0);
-        midpoint[2] = new Vector3(worldCoordHexTile.x - (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.y - (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), 0);
-        midpoint[3] = new Vector3(worldCoordHexTile.x - (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.y + (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), 0);
-        midpoint[4] = new Vector3(worldCoordHexTile.x, worldCoordHexTile.y + 0.5f, 0);
-        midpoint[5] = new Vector3(worldCoordHexTile.x + (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.y + (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), 0);
+       
+
+        if (pointOnTop)
+        {
+            midpoint[0] = new Vector3(worldCoordHexTile.x + (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.y - (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), 0);
+            midpoint[1] = new Vector3(worldCoordHexTile.x, worldCoordHexTile.y - 0.5f, 0);
+            midpoint[2] = new Vector3(worldCoordHexTile.x - (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.y - (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), 0);
+            midpoint[3] = new Vector3(worldCoordHexTile.x - (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.y + (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), 0);
+            midpoint[4] = new Vector3(worldCoordHexTile.x, worldCoordHexTile.y + 0.5f, 0);
+            midpoint[5] = new Vector3(worldCoordHexTile.x + (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.y + (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), 0);
+        }
+        else
+        {
+            midpoint[0] = new Vector3(worldCoordHexTile.x - 0.5f, worldCoordHexTile.y, worldCoordHexTile.z);
+            midpoint[1] = new Vector3(worldCoordHexTile.x - (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), worldCoordHexTile.y - (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.z);
+            midpoint[2] = new Vector3(worldCoordHexTile.x + (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), worldCoordHexTile.y - (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.z);
+            midpoint[3] = new Vector3(worldCoordHexTile.x + 0.5f, worldCoordHexTile.y, worldCoordHexTile.z);
+            midpoint[4] = new Vector3(worldCoordHexTile.x + (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), worldCoordHexTile.y + (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.z);
+            midpoint[5] = new Vector3(worldCoordHexTile.x - (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), worldCoordHexTile.y + (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.z);
+        }
+
 
         for (int i = 0; i < 6; i++) //Setting the z values
         {
-            if (i==5)
+            if (pointOnTop)
             {
-                if (nodes[5].z == floorHight)
+                if (i == 5)
                 {
-                    if (nodes[0].z == floorHight)  //no neighbors in this direction
+                    if (nodes[5].z == floorHight)
                     {
-                        midpoint[5].z = floorHight;
+                        if (nodes[0].z == floorHight)  //no neighbors in this direction
+                        {
+                            midpoint[5].z = floorHight;
+                        }
+                        else                                //1 neighbor
+                        {
+                            midpoint[5].z = (worldCoordHexTile.z + nodes[0].z) / 2;
+                        }
                     }
-                    else                                //1 neighbor
+                    else
                     {
-                        midpoint[5].z = (worldCoordHexTile.z + nodes[0].z) / 2;
+                        if (nodes[0].z == floorHight)  //1 neighbor
+                        {
+                            midpoint[5].z = (worldCoordHexTile.z + nodes[5].z) / 2;
+                        }
+                        else                                //2 neighbors
+                        {
+                            midpoint[5].z = (nodes[5].z + nodes[0].z + worldCoordHexTile.z) / 3;
+                        }
                     }
+
                 }
                 else
                 {
-                    if (nodes[0].z == floorHight)  //1 neighbor
+                    if (nodes[i].z == floorHight)
                     {
-                        midpoint[5].z = (worldCoordHexTile.z + nodes[5].z) / 2;
+                        if (nodes[i + 1].z == floorHight)  //no neighbors in this direction
+                        {
+                            midpoint[i].z = floorHight;
+                        }
+                        else                                //1 neighbor
+                        {
+                            midpoint[i].z = (worldCoordHexTile.z + nodes[i + 1].z) / 2;
+                        }
                     }
-                    else                                //2 neighbors
+                    else
                     {
-                        midpoint[5].z = (nodes[5].z + nodes[0].z + worldCoordHexTile.z) / 3;
+                        if (nodes[i + 1].z == floorHight)  //1 neighbor
+                        {
+                            midpoint[i].z = (worldCoordHexTile.z + nodes[i].z) / 2;
+                        }
+                        else                                //2 neighbors
+                        {
+                            midpoint[i].z = (nodes[i].z + nodes[i + 1].z + worldCoordHexTile.z) / 3;
+                        }
                     }
                 }
-                
             }
             else
             {
-                if (nodes[i].z == floorHight)
+                if (i == 5)
                 {
-                    if (nodes[i+1].z == floorHight)  //no neighbors in this direction
+                    if (nodes[5].z == floorHight)
                     {
-                        midpoint[i].z = floorHight;
+                        if (nodes[0].z == floorHight)  //no neighbors in this direction
+                        {
+                            midpoint[5].z = floorHight;
+                        }
+                        else                                //1 neighbor
+                        {
+                            midpoint[5].z = (worldCoordHexTile.z + nodes[0].z) / 2;
+                        }
                     }
-                    else                                //1 neighbor
+                    else
                     {
-                        midpoint[i].z = (worldCoordHexTile.z + nodes[i+1].z) / 2;
+                        if (nodes[0].z == floorHight)  //1 neighbor
+                        {
+                            midpoint[5].z = (worldCoordHexTile.z + nodes[5].z) / 2;
+                        }
+                        else                                //2 neighbors
+                        {
+                            midpoint[5].z = (nodes[5].z + nodes[0].z + worldCoordHexTile.z) / 3;
+                        }
                     }
+
                 }
                 else
                 {
-                    if (nodes[i+1].z == floorHight)  //1 neighbor
+                    if (nodes[i].z == floorHight)
                     {
-                        midpoint[i].z = (worldCoordHexTile.z + nodes[i].z) / 2;
+                        if (nodes[i + 1].z == floorHight)  //no neighbors in this direction
+                        {
+                            midpoint[i].z = floorHight;
+                        }
+                        else                                //1 neighbor
+                        {
+                            midpoint[i].z = (worldCoordHexTile.z + nodes[i + 1].z) / 2;
+                        }
                     }
-                    else                                //2 neighbors
+                    else
                     {
-                        midpoint[i].z = (nodes[i].z + nodes[i+1].z + worldCoordHexTile.z) / 3;
+                        if (nodes[i + 1].z == floorHight)  //1 neighbor
+                        {
+                            midpoint[i].z = (worldCoordHexTile.z + nodes[i].z) / 2;
+                        }
+                        else                                //2 neighbors
+                        {
+                            midpoint[i].z = (nodes[i].z + nodes[i + 1].z + worldCoordHexTile.z) / 3;
+                        }
                     }
                 }
             }
+            
         }
 
         List<Vector3> midpoints = new List<Vector3>();
@@ -282,153 +408,298 @@ public class GenerateHexTower : MonoBehaviour
                                                                 //Order of neighbors: 0 = right, then go around clockwise, then a secondary loop starting at 6
     {
         List<Vector3Int> neighbors = new List<Vector3Int>();
-        if (hexTile.y % 2 == 0) //Even Rows
+        if (pointOnTop)
         {
-            Vector3Int neighbor = new Vector3Int(hexTile.x + 1,hexTile.y,hexTile.z);    //0
-            neighbor.z = floorHight;
-            for (int i = ceilHight; i < floorHight; i++)  //Checking if there's a tile at the x, y location of neighbor because this is the only way I can think of doing it at the moment
-                                                          //Only looking for it between floor hight and ceiling hight.
-                                                          //Currently will only return the neighbor with the lowest Z value if multiple tiles are placed in the same tile coordinates.
-                                                          //So please don't place more than 1 tile per space per grid.
-            {                                   
-                if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
-                {
-                    neighbor.z = i;
-                    break;
-                }
-            }
-            neighbors.Add(neighbor);
-            neighbor = new Vector3Int(hexTile.x, hexTile.y - 1, hexTile.z);    //1
-            neighbor.z = floorHight;
-            for (int i = ceilHight; i < floorHight; i++)
+            if (hexTile.y % 2 == 0) //Even Rows
             {
-                if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                Vector3Int neighbor = new Vector3Int(hexTile.x + 1, hexTile.y, hexTile.z);    //0
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)  //Checking if there's a tile at the x, y location of neighbor because this is the only way I can think of doing it at the moment
+                                                              //Only looking for it between floor hight and ceiling hight.
+                                                              //Currently will only return the neighbor with the lowest Z value if multiple tiles are placed in the same tile coordinates.
+                                                              //So please don't place more than 1 tile per space per grid.
                 {
-                    neighbor.z = i;
-                    break;
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
                 }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x, hexTile.y - 1, hexTile.z);    //1
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x - 1, hexTile.y - 1, hexTile.z);    //2
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x - 1, hexTile.y, hexTile.z);    //3
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x - 1, hexTile.y + 1, hexTile.z);    //4
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x, hexTile.y + 1, hexTile.z);    //5
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
             }
-            neighbors.Add(neighbor);
-            neighbor = new Vector3Int(hexTile.x - 1, hexTile.y - 1, hexTile.z);    //2
-            neighbor.z = floorHight;
-            for (int i = ceilHight; i < floorHight; i++)
+            else                    //Odd Rows
             {
-                if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                Vector3Int neighbor = new Vector3Int(hexTile.x + 1, hexTile.y, hexTile.z);    //0
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)    
                 {
-                    neighbor.z = i;
-                    break;
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
                 }
-            }
-            neighbors.Add(neighbor);
-            neighbor = new Vector3Int(hexTile.x - 1, hexTile.y, hexTile.z);    //3
-            neighbor.z = floorHight;
-            for (int i = ceilHight; i < floorHight; i++)
-            {
-                if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x + 1, hexTile.y - 1, hexTile.z);    //1
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
                 {
-                    neighbor.z = i;
-                    break;
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
                 }
-            }
-            neighbors.Add(neighbor);
-            neighbor = new Vector3Int(hexTile.x - 1, hexTile.y + 1, hexTile.z);    //4
-            neighbor.z = floorHight;
-            for (int i = ceilHight; i < floorHight; i++)
-            {
-                if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x, hexTile.y - 1, hexTile.z);    //2
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
                 {
-                    neighbor.z = i;
-                    break;
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
                 }
-            }
-            neighbors.Add(neighbor);
-            neighbor = new Vector3Int(hexTile.x, hexTile.y + 1, hexTile.z);    //5
-            neighbor.z = floorHight;
-            for (int i = ceilHight; i < floorHight; i++)
-            {
-                if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x - 1, hexTile.y, hexTile.z);    //3
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
                 {
-                    neighbor.z = i;
-                    break;
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
                 }
-            }
-            neighbors.Add(neighbor);
-        }
-        else                    //Odd Rows
-        {
-            Vector3Int neighbor = new Vector3Int(hexTile.x + 1, hexTile.y, hexTile.z);    //0
-            neighbor.z = floorHight;
-            for (int i = ceilHight; i < floorHight; i++)    //Checking if there's a tile at the x, y location of neighbor because this is the only way I can think of doing it at the moment
-                                                            //Only looking for it between floor hight and ceiling hight.
-                                                            //Currently will only return the neighbor with the lowest Z value if multiple tiles are placed in the same tile coordinates.
-                                                                //So please don't place more than 1 tile per space per grid.
-            {
-                if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x, hexTile.y + 1, hexTile.z);    //4
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
                 {
-                    neighbor.z = i;
-                    break;
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
                 }
-            }
-            neighbors.Add(neighbor);
-            neighbor = new Vector3Int(hexTile.x + 1, hexTile.y - 1, hexTile.z);    //1
-            neighbor.z = floorHight;
-            for (int i = ceilHight; i < floorHight; i++)
-            {
-                if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x + 1, hexTile.y + 1, hexTile.z);    //5
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
                 {
-                    neighbor.z = i;
-                    break;
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
                 }
-            }
-            neighbors.Add(neighbor);
-            neighbor = new Vector3Int(hexTile.x, hexTile.y - 1, hexTile.z);    //2
-            neighbor.z = floorHight;
-            for (int i = ceilHight; i < floorHight; i++)
-            {
-                if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
-                {
-                    neighbor.z = i;
-                    break;
-                }
-            }
-            neighbors.Add(neighbor);
-            neighbor = new Vector3Int(hexTile.x - 1, hexTile.y, hexTile.z);    //3
-            neighbor.z = floorHight;
-            for (int i = ceilHight; i < floorHight; i++)
-            {
-                if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
-                {
-                    neighbor.z = i;
-                    break;
-                }
-            }
-            neighbors.Add(neighbor);
-            neighbor = new Vector3Int(hexTile.x, hexTile.y + 1, hexTile.z);    //4
-            neighbor.z = floorHight;
-            for (int i = ceilHight; i < floorHight; i++)
-            {
-                if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
-                {
-                    neighbor.z = i;
-                    break;
-                }
-            }
-            neighbors.Add(neighbor);
-            neighbor = new Vector3Int(hexTile.x + 1, hexTile.y + 1, hexTile.z);    //5
-            neighbor.z = floorHight;
-            for (int i = ceilHight; i < floorHight; i++)
-            {
-                if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
-                {
-                    neighbor.z = i;
-                    break;
-                }
-            }
-            neighbors.Add(neighbor);
+                neighbors.Add(neighbor);
 
+            }
+        }
+        else
+        {
+            if (hexTile.x % 2 == 0) //Even Columns
+            {
+                Vector3Int neighbor = new Vector3Int(hexTile.x + 1, hexTile.y, hexTile.z);    //0
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++) 
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x + 1, hexTile.y + 1, hexTile.z);    //1
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x , hexTile.y + 1, hexTile.z);    //2
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x - 1, hexTile.y + 1, hexTile.z);    //3
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x, hexTile.y - 1, hexTile.z);    //4
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x + 1, hexTile.y - 1, hexTile.z);    //5
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+            }
+            else                    //Odd Columns
+            {
+                Vector3Int neighbor = new Vector3Int(hexTile.x + 1, hexTile.y + 1, hexTile.z);    //0
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)    
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x, hexTile.y - 1, hexTile.z);    //1
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x - 1, hexTile.y - 1, hexTile.z);    //2
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x - 1, hexTile.y, hexTile.z);    //3
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x, hexTile.y + 1, hexTile.z);    //4
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+                neighbor = new Vector3Int(hexTile.x + 1, hexTile.y, hexTile.z);    //5
+                neighbor.z = floorHight;
+                for (int i = ceilHight; i < floorHight; i++)
+                {
+                    if (activeTiles.Contains(new Vector3Int(neighbor.x, neighbor.y, i)))
+                    {
+                        neighbor.z = i;
+                        break;
+                    }
+                }
+                neighbors.Add(neighbor);
+
+            }
         }
 
         return neighbors;
     }
 
+    public void ClearMesh() {
+        DestroyImmediate(towerMesh);
+    }
 }
