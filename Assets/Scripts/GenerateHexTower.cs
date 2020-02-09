@@ -32,11 +32,11 @@ public class GenerateHexTower : MonoBehaviour
     public void GenerateMesh() {
         activeTiles.Clear();
         //matList.Clear();
-        foreach (Transform child in transform)  //Deleting Children (primitive Spheres used for debugging so the scene doesn't get cluttered)
+         /*foreach (Transform child in transform)  //Deleting Children (primitive Spheres used for debugging so the scene doesn't get cluttered)
         {
             Destroy(child.gameObject);
         }
-        /*if (grid.cellSwizzle == GridLayout.CellSwizzle.XYZ) //In unity, the only difference between a hegaonal grid with points on top vs flat-topped hexagons is the cell swizzle
+       if (grid.cellSwizzle == GridLayout.CellSwizzle.XYZ) //In unity, the only difference between a hegaonal grid with points on top vs flat-topped hexagons is the cell swizzle
         {
             pointOnTop = true;
         }
@@ -161,15 +161,10 @@ public class GenerateHexTower : MonoBehaviour
             SetTileMaterial(hexTile);
             hexIterator++;
         }
-        List<Vector2> uvList = new List<Vector2>();  //Really not sure how to do this part....
-        for (var i = 0; i < vertList.Count; i++)
-        {
-            uvList.Add(new Vector2(vertList[i].x, vertList[i].y));
-        }
-        towerMesh.SetUVs(0, uvList);
+
 
         SetTriangles();
-        towerMesh.SetTriangles(towerMesh.triangles, 0);
+        //towerMesh.SetTriangles(towerMesh.triangles, 0);
     }
 
     public void GetActiveTiles()
@@ -250,7 +245,7 @@ public class GenerateHexTower : MonoBehaviour
                 triangleList.Add(triangles[i]);
             }
             towerMesh.SetTriangles(triangleList.ToArray(), activeTiles.IndexOf(hexTile));
-            towerMesh.RecalculateNormals();
+            //towerMesh.RecalculateNormals();
             index += 19;
         }
 
@@ -732,6 +727,9 @@ public class GenerateHexTower : MonoBehaviour
         mRender.materials = matList.ToArray();
     }
     public void ClearMesh() {
+        activeTiles.Clear();
+        matList.Clear();
+        mRender.materials = matList.ToArray();
         DestroyImmediate(towerMesh);
     }
 }
