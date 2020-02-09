@@ -14,23 +14,29 @@ public class GenerateHexTower : MonoBehaviour
     public Grid grid;
     public Tilemap tMap;
     public GameObject hexTerrainGameObject;
-
+    public MeshRenderer mRender;
+    public Material testMaterial;
     
-    [SerializeField]
-    private bool pointOnTop;
+    //[SerializeField]
+    //private bool pointOnTop;
     [SerializeField]
     private List<Vector3Int> activeTiles;
     private int hexIterator;
 
+    private List<Material> matList;
 
+    public void Start()
+    {
+        GenerateMesh();
+    }
     public void GenerateMesh() {
         activeTiles.Clear();
-
+        //matList.Clear();
         foreach (Transform child in transform)  //Deleting Children (primitive Spheres used for debugging so the scene doesn't get cluttered)
         {
             Destroy(child.gameObject);
         }
-        if (grid.cellSwizzle == GridLayout.CellSwizzle.XYZ) //In unity, the only difference between a hegaonal grid with points on top vs flat-topped hexagons is the cell swizzle
+        /*if (grid.cellSwizzle == GridLayout.CellSwizzle.XYZ) //In unity, the only difference between a hegaonal grid with points on top vs flat-topped hexagons is the cell swizzle
         {
             pointOnTop = true;
         }
@@ -44,7 +50,7 @@ public class GenerateHexTower : MonoBehaviour
             {
                 Debug.LogError("THIS WILL NOT WORK UNLESS THE GRID'S CELL SWIZZLE IS EITHER IN XYZ OR YXZ!!!");
             }
-        }
+        }*/
 
         //hexagon tops
         towerMesh = new Mesh();
@@ -58,6 +64,10 @@ public class GenerateHexTower : MonoBehaviour
         {
             GetActiveTiles();
         }
+        if (matList == null || matList.Count==0)
+        {
+            matList = new List<Material>();
+        }
 
         towerMesh.subMeshCount = activeTiles.Count + 7; //Each hexagonal 'tower' has 7 flat planes, each made as a submesh here 
 
@@ -66,8 +76,8 @@ public class GenerateHexTower : MonoBehaviour
         {
             Vector3[] hexVerts = new Vector3[7];   //points for the hexagon, 0 is center then top (or left if !pointOntop) and then counter clockwise 
 
-            if (pointOnTop)
-            {   //Pointy topped
+          //  if (pointOnTop)
+          //  {   //Pointy topped
                 hexVerts[0] = tMap.GetCellCenterWorld(hexTile);
                 hexVerts[0].z = hexTile.z;    
                 hexVerts[1] = new Vector3(hexVerts[0].x, hexVerts[0].y + radius, hexVerts[0].z);
@@ -76,8 +86,8 @@ public class GenerateHexTower : MonoBehaviour
                 hexVerts[4] = new Vector3(hexVerts[0].x, hexVerts[0].y - radius, hexVerts[0].z);
                 hexVerts[5] = new Vector3(hexVerts[0].x + (radius * Mathf.Sin(60 * (Mathf.PI / 180))), hexVerts[0].y - (radius * Mathf.Cos(60 * (Mathf.PI / 180))), hexVerts[0].z);
                 hexVerts[6] = new Vector3(hexVerts[0].x + (radius * Mathf.Sin(60 * (Mathf.PI / 180))), hexVerts[0].y + (radius * Mathf.Cos(60 * (Mathf.PI / 180))), hexVerts[0].z);
-            }
-            else
+           // }
+           /*else
             {  //Flat toppped
                 hexVerts[0] = tMap.GetCellCenterWorld(hexTile);
                 hexVerts[0].z = hexTile.z;
@@ -87,7 +97,7 @@ public class GenerateHexTower : MonoBehaviour
                 hexVerts[4] = new Vector3(hexVerts[0].x + radius, hexVerts[0].y, hexVerts[0].z);
                 hexVerts[5] = new Vector3(hexVerts[0].x + (radius * Mathf.Cos(60 * (Mathf.PI / 180))), hexVerts[0].y + (radius * Mathf.Sin(60 * (Mathf.PI / 180))), hexVerts[0].z);
                 hexVerts[6] = new Vector3(hexVerts[0].x - (radius * Mathf.Cos(60 * (Mathf.PI / 180))), hexVerts[0].y + (radius * Mathf.Sin(60 * (Mathf.PI / 180))), hexVerts[0].z);
-            }
+            }*/
             
 
             for (int i = 0; i < hexVerts.Length; i++)
@@ -134,21 +144,29 @@ public class GenerateHexTower : MonoBehaviour
                 towerMesh.SetVertices(vertList);               
             }
 
-               /* if (activeTiles.IndexOf(hexTile) == activeTiles.Count-1)
-                {
 
-                    foreach (var item in vertList)
-                    { 
-                        GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                        sphere.transform.position = item;
-                        
-                        sphere.transform.SetParent(hexTerrainGameObject.transform);
-                        sphere.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-                        sphere.name = "Sphere " + vertList.IndexOf(item);
-                    }
-                }*/
+            /* if (activeTiles.IndexOf(hexTile) == activeTiles.Count-1)
+             {
+
+                 foreach (var item in vertList)
+                 { 
+                     GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                     sphere.transform.position = item;
+
+                     sphere.transform.SetParent(hexTerrainGameObject.transform);
+                     sphere.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+                     sphere.name = "Sphere " + vertList.IndexOf(item);
+                 }
+             }*/
+            SetTileMaterial(hexTile);
             hexIterator++;
         }
+        List<Vector2> uvList = new List<Vector2>();  //Really not sure how to do this part....
+        for (var i = 0; i < vertList.Count; i++)
+        {
+            uvList.Add(new Vector2(vertList[i].x, vertList[i].y));
+        }
+        towerMesh.SetUVs(0, uvList);
 
         SetTriangles();
         towerMesh.SetTriangles(towerMesh.triangles, 0);
@@ -178,8 +196,8 @@ public class GenerateHexTower : MonoBehaviour
         foreach (var hexTile in activeTiles)
         {
             int[] triangles;
-            if (pointOnTop)
-            {
+            //if (pointOnTop)
+            //{
                 triangles = new int[] {
                     index, index + 2, index + 1,    //Start hexagon
                     index, index + 3, index + 2,
@@ -200,7 +218,7 @@ public class GenerateHexTower : MonoBehaviour
                     index + 6, index + 15, index + 16,  //Skirt Flap 6
                     index + 6, index + 16, index + 5
                 };
-            }
+           /* }
             else
             {
                 triangles = new int[] {
@@ -223,7 +241,7 @@ public class GenerateHexTower : MonoBehaviour
                     index + 6, index + 16, index + 15,  //Skirt Flap 6
                     index + 6, index + 15, index + 5
                 };
-            }
+            }*/
             
             
 
@@ -232,7 +250,7 @@ public class GenerateHexTower : MonoBehaviour
                 triangleList.Add(triangles[i]);
             }
             towerMesh.SetTriangles(triangleList.ToArray(), activeTiles.IndexOf(hexTile));
-
+            towerMesh.RecalculateNormals();
             index += 19;
         }
 
@@ -247,15 +265,15 @@ public class GenerateHexTower : MonoBehaviour
         Vector3 node;
         foreach (Vector3Int intNode in intNodes)        //Getting the center of the tiles in World coordinates (and making it Vector3s instead of Vector3Ints while we're at it)
         {
-            if (pointOnTop)
-            {
+          //  if (pointOnTop)
+           // {
                 node = tMap.GetCellCenterWorld(intNode);
-            }
+            /*}
             else
             {
                 node.x = tMap.GetCellCenterWorld(intNode).y;
                 node.y = tMap.GetCellCenterWorld(intNode).x;
-            }
+            }*/
            
             node.z = intNode.z; //GetCellCenterWorld() always returns 0 for z, so putting it back here
             nodes.Add(node);
@@ -265,15 +283,15 @@ public class GenerateHexTower : MonoBehaviour
                             //Then I just need to line them up right and to work with my previous code, then determind the z value                  
        
 
-        if (pointOnTop)
-        {
+        //if (pointOnTop)
+        //{
             midpoint[0] = new Vector3(worldCoordHexTile.x + (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.y - (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), 0);
             midpoint[1] = new Vector3(worldCoordHexTile.x, worldCoordHexTile.y - 0.5f, 0);
             midpoint[2] = new Vector3(worldCoordHexTile.x - (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.y - (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), 0);
             midpoint[3] = new Vector3(worldCoordHexTile.x - (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.y + (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), 0);
             midpoint[4] = new Vector3(worldCoordHexTile.x, worldCoordHexTile.y + 0.5f, 0);
             midpoint[5] = new Vector3(worldCoordHexTile.x + (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.y + (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), 0);
-        }
+      /*  }
         else
         {
             midpoint[0] = new Vector3(worldCoordHexTile.x - 0.5f, worldCoordHexTile.y, worldCoordHexTile.z);
@@ -282,13 +300,13 @@ public class GenerateHexTower : MonoBehaviour
             midpoint[3] = new Vector3(worldCoordHexTile.x + 0.5f, worldCoordHexTile.y, worldCoordHexTile.z);
             midpoint[4] = new Vector3(worldCoordHexTile.x + (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), worldCoordHexTile.y + (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.z);
             midpoint[5] = new Vector3(worldCoordHexTile.x - (0.5f * Mathf.Cos(60 * (Mathf.PI / 180))), worldCoordHexTile.y + (0.5f * Mathf.Sin(60 * (Mathf.PI / 180))), worldCoordHexTile.z);
-        }
+        }*/
 
 
         for (int i = 0; i < 6; i++) //Setting the z values
         {
-            if (pointOnTop)
-            {
+           // if (pointOnTop)
+            //{
                 if (i == 5)
                 {
                     if (nodes[5].z == floorHight)
@@ -340,7 +358,7 @@ public class GenerateHexTower : MonoBehaviour
                         }
                     }
                 }
-            }
+            /*}
             else
             {
                 if (i == 5)
@@ -394,7 +412,7 @@ public class GenerateHexTower : MonoBehaviour
                         }
                     }
                 }
-            }
+            }*/
             
         }
 
@@ -408,8 +426,8 @@ public class GenerateHexTower : MonoBehaviour
                                                                 //Order of neighbors: 0 = right, then go around clockwise, then a secondary loop starting at 6
     {
         List<Vector3Int> neighbors = new List<Vector3Int>();
-        if (pointOnTop)
-        {
+        //if (pointOnTop)
+        //{
             if (hexTile.y % 2 == 0) //Even Rows
             {
                 Vector3Int neighbor = new Vector3Int(hexTile.x + 1, hexTile.y, hexTile.z);    //0
@@ -552,7 +570,7 @@ public class GenerateHexTower : MonoBehaviour
                 neighbors.Add(neighbor);
 
             }
-        }
+        /*}
         else
         {
             if (hexTile.x % 2 == 0) //Even Columns
@@ -694,11 +712,25 @@ public class GenerateHexTower : MonoBehaviour
                 neighbors.Add(neighbor);
 
             }
-        }
+        }*/
 
         return neighbors;
     }
-
+    public void SetTileMaterial(Vector3Int hexTile) {
+        Sprite tempSprite = tMap.GetSprite(hexTile);
+        Material mat = new Material(testMaterial);
+        Texture2D tex= new Texture2D((int) tempSprite.rect.width, (int) tempSprite.rect.height);
+        tex.name = "hex" + hexIterator;
+        var pix = tempSprite.texture.GetPixels((int)tempSprite.textureRect.x,
+                                        (int)tempSprite.textureRect.y,
+                                        (int)tempSprite.textureRect.width,
+                                        (int)tempSprite.textureRect.height);
+        tex.SetPixels(pix);
+        tex.Apply();
+        testMaterial.SetTexture(tex.name, tex);
+        matList.Add(mat);
+        mRender.materials = matList.ToArray();
+    }
     public void ClearMesh() {
         DestroyImmediate(towerMesh);
     }
