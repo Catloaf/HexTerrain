@@ -69,7 +69,7 @@ public class GenerateHexTower : MonoBehaviour
             matList = new List<Material>();
         }
 
-        towerMesh.subMeshCount = activeTiles.Count + 7; //Each hexagonal 'tower' has 7 flat planes, each made as a submesh here 
+        towerMesh.subMeshCount = activeTiles.Count; //Each hexagonal 'tower' has 7 flat planes, each made as a submesh here 
 
         hexIterator = 0;
         foreach (Vector3Int hexTile in activeTiles)
@@ -105,7 +105,7 @@ public class GenerateHexTower : MonoBehaviour
                 vertList.Add(hexVerts[i]);
             }
 
-            towerMesh.SetVertices(vertList);
+            //towerMesh.SetVertices(vertList);
            
         //skirt
 
@@ -161,10 +161,16 @@ public class GenerateHexTower : MonoBehaviour
             SetTileMaterial(hexTile);
             hexIterator++;
         }
-
-
+       
+        Vector2[] UVs = new Vector2[towerMesh.vertices.Length]; //I hope this is how one sets UVs...
+        for (int i = 0; i < towerMesh.vertices.Length; i++)
+        {
+            UVs[i] = new Vector2(towerMesh.vertices[i].x, towerMesh.vertices[i].y);
+        }
+        towerMesh.SetUVs(0, UVs);
         SetTriangles();
         //towerMesh.SetTriangles(towerMesh.triangles, 0);
+
     }
 
     public void GetActiveTiles()
@@ -188,7 +194,7 @@ public class GenerateHexTower : MonoBehaviour
     private void SetTriangles() {   //Let's try putting all the triangles in their own function for readability
         List<int> triangleList = new List<int>();   //List of Triangles for the Mesh
         int index = 0;
-        foreach (var hexTile in activeTiles)
+        foreach (Vector3Int hexTile in activeTiles)
         {
             int[] triangles;
             //if (pointOnTop)
@@ -716,13 +722,15 @@ public class GenerateHexTower : MonoBehaviour
         Material mat = new Material(testMaterial);
         Texture2D tex= new Texture2D((int) tempSprite.rect.width, (int) tempSprite.rect.height);
         tex.name = "hex" + hexIterator;
+        mat.name = "Material" + hexIterator;
         var pix = tempSprite.texture.GetPixels((int)tempSprite.textureRect.x,
                                         (int)tempSprite.textureRect.y,
                                         (int)tempSprite.textureRect.width,
                                         (int)tempSprite.textureRect.height);
         tex.SetPixels(pix);
         tex.Apply();
-        testMaterial.SetTexture(tex.name, tex);
+        mat.SetTexture(tex.name, tex);
+
         matList.Add(mat);
         mRender.materials = matList.ToArray();
     }
