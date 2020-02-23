@@ -730,6 +730,15 @@ public class GenerateHexTower : MonoBehaviour
         tex.SetPixels(pix);
         tex.Apply();
         mat.SetTexture(tex.name, tex);
+        if (hexTile.y % 2 == 0)
+        {
+            mat.SetTextureOffset("_DetailAlbedoMap", new Vector2(0.5f + (0.135f * hexTile.x), 0.5f + (0.325f * hexTile.y)));
+        }
+        else
+        {
+            mat.SetTextureOffset("_DetailAlbedoMap", new Vector2(0.066f + ((1-(Mathf.Sin(1.0472f))) * hexTile.x), 0.5f + (0.325f * hexTile.y)));
+        }
+       
 
         matList.Add(mat);
         mRender.materials = matList.ToArray();
